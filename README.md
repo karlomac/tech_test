@@ -1,160 +1,168 @@
-# Using this project
 
-Please read this document fully before starting.
 
-Clone the project, change into the directory, and install dependencies:
+# 🎯 Scrabble Score Calculator - Implementation
 
-**Node version**
+This project was an exciting challenge to enhance a React/Express starter application into a fully-featured Scrabble word scoring tool. The goal was to not only meet the technical requirements but to create an engaging, polished user experience that demonstrates thoughtful design and attention to craft.
 
-```
-16.0.0 or 18.0.0
-```
+## ✨ Features Implemented
 
-**Yarn version**
+### Core Functionality
+- **Scrabble Score Calculation** - Accurate point calculation for any word based on official Scrabble letter values
+- **Real-time Score Display** - See your score update instantly as you type
+- **Word History** - Track all submitted words with timestamps
+- **Total Score Tracking** - Cumulative score across all valid words
 
-```
-1.22.19
-```
+### Enhanced User Experience
+- **Animated Letter Tiles** 🎲
+  - Letters appear as authentic Scrabble tiles with point values
+  - Smooth scale-in animations when typing
+  - Hover effects that make tiles grow slightly larger
+  - Wood-textured tile rack matching real Scrabble aesthetics
 
-Install dependencies:
+- **Dictionary Validation** 📚
+  - Real-time word validation using free Dictionary API
+  - Green checkmark (✓) for valid dictionary words
+  - Red X (✗) for invalid/made-up words
+  - Word definitions displayed for valid entries
+  - Part of speech labels (noun, verb, etc.)
+  - Invalid words excluded from total score
 
+- **Micro-Interactions & Polish** ✨
+  - Animated loading spinner during API calls
+  - Empty state with bouncing dice emoji
+  - Clickable example words (QUARTZ, JAZZ, FIZZY)
+  - Enhanced error messages with dismiss button
+  - Smooth transitions and animations throughout
+  - Keyboard shortcuts (Enter to submit, Escape to clear)
+
+- **Accessibility** ♿
+  - Full keyboard navigation support
+  - Focus-visible styles with orange outline rings
+  - High contrast text for readability
+  - ARIA-friendly structure
+
+### Design System
+- **Colors**: Primary orange (#ec7f13), tile cream (#f7e8d0), wood tones, validation green/red
+- **Typography**: Spline Sans font family (300-900 weights)
+- **Animations**: Tile appear, slide-in, pop, bounce, fade effects
+- **Responsive**: Works on desktop and mobile devices
+
+## 🚀 Running the Application
+
+### Prerequisites
+- Node.js 16.0.0 or 18.0.0
+- Yarn 1.22.19
+
+### Installation
 ```bash
+# Install dependencies
 yarn
-```
 
-Create a `.env` file if you plan on using environment variables:
-
-```bash
+# Optional: Create .env file if needed
 touch .env
 ```
 
-Run the project:
-
+### Development Mode
 ```bash
+# Option 1: Run both frontend and backend together
 yarn dev
+
+# Option 2: Run separately in two terminals
+# Terminal 1 - Backend (port 3001)
+yarn server
+
+# Terminal 2 - Frontend (port 3000)
+yarn start
 ```
 
----
+The app will be available at:
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:3001`
 
-# The Technical Test
+### Testing the API
+```bash
+# Test the scrabble-score endpoint
+curl -X POST http://localhost:3001/api/scrabble-score \
+  -H "Content-Type: application/json" \
+  -d '{"word":"QUARTZ"}'
 
-This test is designed to give us a window into how you think, how you approach design and code, and how you express creativity within given constraints.
+# Expected response:
+# {"word":"QUARTZ","score":24,"breakdown":[...]}
+```
 
-We’re less interested in whether you “get everything right,” and more in how you **use your judgment, respect design as a craft, and collaborate with the codebase in front of you**.
+## 📦 Production Build
 
-We’ve kept the instructions intentionally light to give you freedom. Please feel free to make decisions, explore, and explain your reasoning.
+### Build for Production
+```bash
+# Create optimized production build
+yarn build
 
----
+# The build folder will contain the static files
+# Serve with any static file server
+```
 
-## Time Expectation
+### Deployment Options
 
-We don’t expect you to spend more than about **1.5 - 2 hours** but this is totally up to you.
+**Frontend (Static Hosting)**
+- **Netlify/Vercel/GitHub Pages**
+  - Build command: `yarn build`
+  - Publish directory: `build`
+  - Environment: Node 18.x
 
-Please create a repo and commit your work regularly. Even unfinished work helps us see your thought process and collaboration style. We’ll review and discuss together afterward.
+**Backend (Node.js Hosting)**
+- **Heroku/Railway/Render**
+  - Start command: `node server/index.js`
+  - Port: 3001 (or process.env.PORT)
 
----
+**Full Stack Deployment**
+1. Deploy backend to Node.js hosting platform
+2. Update API URL in `src/App.js` (line 96, 101) from `http://localhost:3001` to production backend URL
+3. Build frontend with updated API URL
+4. Deploy frontend to static hosting
 
-## Task 1: Create a Scrabble Score API (Node.js)
+## 🛠️ Technical Stack
 
-**Objective:**
-Add a RESTful API endpoint in the existing backend that computes a Scrabble score for a given word.
+**Backend**
+- Express.js
+- CORS enabled
+- Body parser for JSON
+- Custom scoring algorithm
 
-**Quick Scrabble Primer:**
-Scrabble is a word game where each letter has a point value. The score of a word is simply the sum of its letters (no board bonuses for this test).
+**Frontend**
+- React 16.13 (class components)
+- CSS3 animations
+- Fetch API for HTTP requests
+- Dictionary API integration
 
-**Letter values:**
+**Build Tools**
+- React Scripts 3.4.0
+- Webpack 4 (with OpenSSL legacy provider for Node 18+)
 
-* 1 point → A, E, I, O, U, L, N, R, S, T
-* 2 points → D, G
-* 3 points → B, C, M, P
-* 4 points → F, H, V, W, Y
-* 5 points → K
-* 8 points → J, X
-* 10 points → Q, Z
+## 📁 Project Structure
 
-**Example:**
-“cabbage” → 14 points
+```
+/server
+  ├── index.js              # Express server with API endpoints
+  └── scrabbleScorer.js     # Scoring logic and validation
 
-**Details:**
+/src
+  ├── App.js                # Main React component
+  ├── App.css               # Complete styling with animations
+  └── index.css             # Base styles
 
-* Method: `POST`
-* Endpoint: `/api/scrabble-score`
-* Input:
+/public
+  └── index.html            # HTML template with Spline Sans font
+```
 
-  ```json
-  { "word": "example" }
-  ```
-* Output:
+## 🎨 Design Decisions
 
-  ```json
-  { "score": 14 }
-  ```
+This implementation prioritizes:
+- **Visual Authenticity** - Tiles look and feel like real Scrabble pieces
+- **Immediate Feedback** - Real-time scoring and validation
+- **Delightful Interactions** - Smooth animations and micro-interactions
+- **Accessibility First** - Keyboard navigation and focus management
+- **Error Recovery** - Clear error messages with actionable solutions
 
-**Notes:**
-
-* Handle case insensitivity.
-* Return a clear error for invalid input (numbers, symbols, empty strings).
-* Integrate into the backend’s existing structure and routing.
-* Follow existing error-handling patterns.
-
-**Stretch goal (if time permits):**
-
-* Add unit tests (e.g. Jest) to cover normal cases and edge cases.
-
----
-
-## Task 2: Connect the React Frontend
-
-**Objective:**
-Extend the frontend to let users input a word and see its Scrabble score.
-
-**Notes:**
-
-* Add a form with an input field and submit button.
-* When submitted, call your API and display results in a table that keeps history of submissions.
-* Show user-friendly error states.
-
----
-
-## Creativity & Design
-
-This is where we want to see **you**.
-
-We deliberately only provide *one* piece of design inspiration. Everything else is **up for grabs** — we want to see:
-
-* How you interpret the style,
-* How closely you choose to match,
-* How you respect the craft of design (empathetic, thoughtful, considered),
-* How you use creativity to make the frontend engaging.
-
-We believe that respecting design deeply informs better collaboration and product decisions. Don’t just “make it work” — show us how you think about **design as an experience**.
-
-<img width="476" height="93" alt="Screenshot 2025-10-01 at 15 58 43" src="https://github.com/user-attachments/assets/f0e47694-2f68-4a72-9191-174622f71c4a" />
-
-https://github.com/user-attachments/assets/fd93c1a7-abb4-420c-a91c-abaec8cd7c7a
+The design was inspired by the provided reference while adding modern polish and thoughtful UX enhancements.
 
 ---
-
-## Deliverables
-
-* Push your work to a repo you’ve created.
-* Keep commits regular and descriptive.
-* Update the README with instructions for running/testing your feature.
-
----
-
-## Final Thoughts
-
-This test isn’t about perfection. It’s about:
-
-* How you explore a problem,
-* How you respect and extend a design,
-* How you use creativity and judgment,
-* How you communicate your process.
-
-We look forward to seeing what you do.
-
----
-
-
-
