@@ -1,6 +1,19 @@
 import React, { Component } from "react";
 import "./App.css";
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
+// Scrabble letter values for local preview
+const LETTER_VALUES = {
+  A: 1, E: 1, I: 1, O: 1, U: 1, L: 1, N: 1, R: 1, S: 1, T: 1,
+  D: 2, G: 2,
+  B: 3, C: 3, M: 3, P: 3,
+  F: 4, H: 4, V: 4, W: 4, Y: 4,
+  K: 5,
+  J: 8, X: 8,
+  Q: 10, Z: 10
+};
+
 class App extends Component {
   state = {
     currentWord: '',
@@ -8,25 +21,16 @@ class App extends Component {
     breakdown: [],
     history: [],
     error: null,
-    isLoading: false,
-    isValidatingWord: false
+    isLoading: false
   };
 
-  LETTER_VALUES = {
-    A: 1, E: 1, I: 1, O: 1, U: 1, L: 1, N: 1, R: 1, S: 1, T: 1,
-    D: 2, G: 2,
-    B: 3, C: 3, M: 3, P: 3,
-    F: 4, H: 4, V: 4, W: 4, Y: 4,
-    K: 5,
-    J: 8, X: 8,
-    Q: 10, Z: 10
-  };
+  inputRef = React.createRef();
 
   calculateScoreLocally = (word) => {
     const cleanWord = word.toUpperCase();
     const breakdown = cleanWord.split('').map(letter => ({
       letter,
-      value: this.LETTER_VALUES[letter] || 0
+      value: LETTER_VALUES[letter] || 0
     }));
     
     const score = breakdown.reduce((sum, item) => sum + item.value, 0);
@@ -36,7 +40,9 @@ class App extends Component {
 
   validateWord = async (word) => {
     try {
-      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`);
+      const response = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`
+      );
       
       if (!response.ok) {
         return { isValid: false, definition: null };
@@ -44,24 +50,59 @@ class App extends Component {
       
       const data = await response.json();
       
-      if (data && data.length > 0 && data[0].meanings && data[0].meanings.length > 0) {
+      if (data?.[0]?.meanings?.[0]) {
         const firstMeaning = data[0].meanings[0];
-        const definition = firstMeaning.definitions && firstMeaning.definitions.length > 0
-          ? firstMeaning.definitions[0].definition
-          : null;
+        const definition = firstMeaning.definitions?.[0]?.definition || null;
         const partOfSpeech = firstMeaning.partOfSpeech || '';
         
-        return { 
-          isValid: true, 
-          definition,
-          partOfSpeech
-        };
+        return { isValid: true, definition, partOfSpeech };
       }
       
       return { isValid: false, definition: null };
     } catch (error) {
       return { isValid: false, definition: null };
     }
+  };
+
+  fetchScoreFromAPI = async (word) => {
+    const response = await fetch(`${API_URL}/api/scrabble-score`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ word })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to calculate score');
+    }
+    
+    return data;
+  };
+
+  addToHistory = (scoreData, validationResult) => {
+    this.setState(prevState => ({
+      history: [
+        {
+          word: scoreData.word,
+          score: scoreData.score,
+          timestamp: new Date().toLocaleTimeString(),
+          id: Date.now(),
+          isValid: validationResult.isValid,
+          definition: validationResult.definition,
+          partOfSpeech: validationResult.partOfSpeech
+        },
+        ...prevState.history
+      ]
+    }));
+  };
+
+  clearInput = () => {
+    this.setState({
+      currentWord: '',
+      currentScore: 0,
+      breakdown: []
+    });
   };
 
   handleInputChange = (e) => {
@@ -82,49 +123,30 @@ class App extends Component {
   };
 
   handleSubmit = async () => {
-    const { currentWord } = this.state;
+    const { currentWord, isLoading } = this.state;
     
     if (!currentWord.trim()) {
       this.setState({ error: 'Please enter a word' });
       return;
     }
     
+    // Prevent multiple simultaneous submissions
+    if (isLoading) {
+      return;
+    }
+    
     this.setState({ isLoading: true, error: null });
     
     try {
-      const [scoreResponse, validationResult] = await Promise.all([
-        fetch('http://localhost:3001/api/scrabble-score', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ word: currentWord })
-        }),
+      const [scoreData, validationResult] = await Promise.all([
+        this.fetchScoreFromAPI(currentWord),
         this.validateWord(currentWord)
       ]);
       
-      const data = await scoreResponse.json();
+      this.addToHistory(scoreData, validationResult);
+      this.clearInput();
       
-      if (!scoreResponse.ok) {
-        throw new Error(data.error || 'Failed to calculate score');
-      }
-      
-      this.setState(prevState => ({
-        history: [
-          {
-            word: data.word,
-            score: data.score,
-            timestamp: new Date().toLocaleTimeString(),
-            id: Date.now(),
-            isValid: validationResult.isValid,
-            definition: validationResult.definition,
-            partOfSpeech: validationResult.partOfSpeech
-          },
-          ...prevState.history
-        ],
-        currentWord: '',
-        currentScore: 0,
-        breakdown: [],
-        isLoading: false
-      }));
+      this.setState({ isLoading: false });
     } catch (error) {
       this.setState({
         error: error.message,
@@ -137,12 +159,8 @@ class App extends Component {
     if (e.key === 'Enter') {
       this.handleSubmit();
     } else if (e.key === 'Escape') {
-      this.setState({ 
-        currentWord: '', 
-        currentScore: 0, 
-        breakdown: [],
-        error: null 
-      });
+      this.clearInput();
+      this.setState({ error: null });
     }
   };
 
@@ -156,17 +174,10 @@ class App extends Component {
     });
   };
 
-  componentDidMount() {
-    document.addEventListener('keydown', this.handleKeyPress);
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener('keydown', this.handleKeyPress);
-  }
 
   getTotalScore = () => {
     return this.state.history.reduce((total, item) => {
-      return item.isValid !== false ? total + item.score : total;
+      return item.isValid === true ? total + item.score : total;
     }, 0);
   };
 
@@ -197,13 +208,14 @@ class App extends Component {
             </div>
             
             <input
+              ref={this.inputRef}
               type="text"
               value={currentWord}
               onChange={this.handleInputChange}
+              onKeyDown={this.handleKeyPress}
               placeholder="Type a word..."
               className="text-input"
               maxLength={15}
-              autoFocus
             />
             
             <div className="score-display">
@@ -247,7 +259,9 @@ class App extends Component {
           
           {history.length === 0 && !isLoading && (
             <section className="empty-state">
-              <div className="empty-state-icon">🎲</div>
+              <div className="empty-state-icon">
+                <span role="img" aria-label="dice">🎲</span>
+              </div>
               <h3 className="empty-state-title">No words scored yet</h3>
               <p className="empty-state-description">
                 Start by typing a word above to see its Scrabble score!

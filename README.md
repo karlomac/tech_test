@@ -103,22 +103,30 @@ yarn build
 
 ### Deployment Options
 
+**Environment Configuration**
+Copy `.env.example` to `.env` and configure:
+```bash
+cp .env.example .env
+# Edit .env with your values
+```
+
 **Frontend (Static Hosting)**
 - **Netlify/Vercel/GitHub Pages**
   - Build command: `yarn build`
   - Publish directory: `build`
   - Environment: Node 18.x
+  - Set env var: `REACT_APP_API_URL=https://your-backend-url.com`
 
 **Backend (Node.js Hosting)**
 - **Heroku/Railway/Render**
   - Start command: `node server/index.js`
-  - Port: 3001 (or process.env.PORT)
+  - Set env var: `PORT` (auto-provided by most platforms)
 
 **Full Stack Deployment**
 1. Deploy backend to Node.js hosting platform
-2. Update API URL in `src/App.js` (line 96, 101) from `http://localhost:3001` to production backend URL
-3. Build frontend with updated API URL
-4. Deploy frontend to static hosting
+2. Set `REACT_APP_API_URL` environment variable to backend URL
+3. Build frontend: `yarn build`
+4. Deploy frontend build directory to static hosting
 
 ## 🛠️ Technical Stack
 

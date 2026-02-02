@@ -5,15 +5,12 @@ const cors = require("cors");
 const { calculateScore } = require('./scrabbleScorer');
 
 const app = express();
+const PORT = process.env.PORT || 3001;
+
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(pino);
-
-app.get('/api/greeting', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(JSON.stringify({ greeting: `Hello World!` }));
-});
 
 app.post('/api/scrabble-score', (req, res) => {
   try {
@@ -26,6 +23,6 @@ app.post('/api/scrabble-score', (req, res) => {
   }
 });
 
-app.listen(3001, () =>
-  console.log('Express server is running on localhost:3001')
-);
+app.listen(PORT, () => {
+  // Server started - logging handled by express-pino-logger middleware
+});
